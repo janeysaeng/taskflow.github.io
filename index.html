@@ -4,27 +4,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal TaskFlow | Purple & Yellow</title>
+    <title>Focus. | Task Management</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <script>
-        // Shim for process.env to prevent crashes in browser environments
+        // Critical: Defining 'process' and 'global' before any modules load
+        // This prevents "process is not defined" errors in production environments
         window.process = {
             env: {
                 DB_PATH: 'tasks.db',
-                // API_KEY is usually injected by the environment, 
-                // but we ensure the object exists to avoid 'undefined' errors
-                API_KEY: '' 
+                API_KEY: '' // Should be populated by the deployment environment
             }
+        };
+        window.global = window;
+
+        // Emergency error catcher for debugging white screens
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('Window Error:', msg, error);
+            const root = document.getElementById('root');
+            if (root && root.innerHTML === "") {
+                root.innerHTML = '<div style="padding: 20px; color: #4c1d95; font-family: sans-serif;">' +
+                    '<h2>Application Error</h2>' +
+                    '<p>The application failed to start. This is often due to missing API keys or path issues.</p>' +
+                    '<pre style="font-size: 10px; color: #666;">' + msg + '</pre>' +
+                    '</div>';
+            }
+            return false;
         };
     </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fafaff; /* Very light purple tint */
-            color: #2d1a4a; /* Deep purple-black */
+            background-color: #fafaff;
+            color: #2d1a4a;
             -webkit-font-smoothing: antialiased;
         }
         .fade-in {
@@ -38,13 +52,9 @@
             outline: none;
         }
         ::selection {
-            background-color: #fef08a; /* Yellow selection */
-            color: #4c1d95; /* Purple text */
+            background-color: #fef08a;
+            color: #4c1d95;
         }
-        .custom-shadow {
-            box-shadow: 0 4px 20px -5px rgba(124, 58, 237, 0.05);
-        }
-        /* Custom scrollbar for better aesthetics */
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -73,7 +83,6 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- Explicitly load the application entry point -->
     <script type="module" src="./index.tsx"></script>
 </body>
 </html>
