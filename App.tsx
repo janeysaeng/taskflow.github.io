@@ -1,27 +1,23 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { dbService } from './services/dbService';
 import { geminiService } from './services/geminiService';
 import { Todo, Priority } from './types';
 import TaskForm from './components/TaskForm';
 import TaskList from './components/TaskList';
-import { Sparkles, Trash2, Filter, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Zap } from 'lucide-react';
 
 const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  // Load tasks on mount
   useEffect(() => {
     const loadTasks = async () => {
       try {
         const data = await dbService.getAll();
         setTodos(data);
-      } catch (err) {
-        setError('Failed to load tasks.');
       } finally {
         setIsLoading(false);
       }
@@ -37,8 +33,8 @@ const App: React.FC = () => {
       priority,
       createdAt: Date.now(),
     };
-    const updated = await dbService.add(newTodo);
-    setTodos(prev => [...prev, updated]);
+    await dbService.add(newTodo);
+    setTodos(prev => [newTodo, ...prev]);
   };
 
   const handleToggleTodo = async (id: string) => {
@@ -65,9 +61,10 @@ const App: React.FC = () => {
 
   const handleAiOptimize = async () => {
     setIsAiLoading(true);
-    setError(null);
     try {
-      const result = await geminiService.optimizeTasks(todos.filter(t => !t.completed));
+      const activeTasks = todos.filter(t => !t.completed);
+      if (activeTasks.length === 0) return;
+      const result = await geminiService.optimizeTasks(activeTasks);
       const updatedTodos = [...todos];
       result.optimizedTasks.forEach(opt => {
         const idx = updatedTodos.findIndex(t => t.id === opt.id);
@@ -77,9 +74,6 @@ const App: React.FC = () => {
       });
       await dbService.save(updatedTodos);
       setTodos(updatedTodos);
-      alert(result.summary);
-    } catch (err) {
-      setError('AI optimization failed. Please check your network.');
     } finally {
       setIsAiLoading(false);
     }
@@ -93,103 +87,100 @@ const App: React.FC = () => {
     }
   }, [todos, filter]);
 
-  const stats = useMemo(() => ({
-    total: todos.length,
-    active: todos.filter(t => !t.completed).length,
-    completed: todos.filter(t => t.completed).length,
-  }), [todos]);
-
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <div className="min-h-screen flex items-center justify-center bg-[#fafaff]">
+        <Loader2 className="w-6 h-6 animate-spin text-purple-200" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 px-4 py-12 md:py-20">
-      <div className="max-w-2xl mx-auto space-y-8">
-        {/* Header */}
-        <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
-              TaskFlow <span className="text-indigo-600 italic font-medium text-lg">AI</span>
-            </h1>
-            <p className="text-slate-500 mt-1">Smarter organization for your daily workflow.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleAiOptimize}
-              disabled={isAiLoading || todos.length === 0}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full font-medium hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-indigo-100"
-            >
-              {isAiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              AI Prioritize
-            </button>
-          </div>
-        </header>
+    <div className="min-h-screen max-w-2xl mx-auto px-6 py-16 md:py-24 fade-in">
+      <header className="mb-14 flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-extrabold tracking-tight text-purple-900 mb-2">
+            Focus<span className="text-yellow-500">.</span>
+          </h1>
+          <p className="text-xs font-bold text-purple-300 uppercase tracking-[0.2em]">
+            {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+          </p>
+        </div>
+        <button
+          onClick={handleAiOptimize}
+          disabled={isAiLoading || todos.length === 0}
+          className="relative p-4 rounded-2xl bg-white border border-purple-50 hover:border-yellow-200 hover:bg-yellow-50 transition-all duration-300 disabled:opacity-30 group shadow-sm"
+          title="AI Smart Prioritize"
+        >
+          {isAiLoading ? (
+            <Loader2 className="w-6 h-6 animate-spin text-purple-600" />
+          ) : (
+            <Sparkles className="w-6 h-6 text-purple-400 group-hover:text-yellow-600 transition-colors" />
+          )}
+          {isAiLoading && (
+             <div className="absolute -top-1 -right-1 flex h-3 w-3">
+               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+               <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+             </div>
+          )}
+        </button>
+      </header>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 text-sm flex items-center gap-3">
-            <span className="font-bold">Error:</span> {error}
+      <div className="mb-14 bg-white p-6 rounded-3xl shadow-sm border border-purple-50">
+        <TaskForm onAdd={handleAddTask} />
+      </div>
+
+      <nav className="flex items-center gap-8 mb-10 text-[11px] font-black uppercase tracking-widest text-purple-200">
+        {(['all', 'active', 'completed'] as const).map((f) => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`transition-all duration-300 relative pb-2 ${
+              filter === f 
+                ? 'text-purple-900 after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-yellow-400' 
+                : 'hover:text-purple-400'
+            }`}
+          >
+            {f}
+          </button>
+        ))}
+        {todos.some(t => t.completed) && (
+          <button
+            onClick={handleClearCompleted}
+            className="ml-auto text-purple-300 hover:text-rose-500 transition-colors"
+          >
+            Clear Done
+          </button>
+        )}
+      </nav>
+
+      <main className="space-y-1">
+        {filteredTodos.length > 0 ? (
+          <TaskList 
+            todos={filteredTodos} 
+            onToggle={handleToggleTodo} 
+            onDelete={handleDeleteTodo} 
+            onEdit={handleEditTodo} 
+          />
+        ) : (
+          <div className="py-24 text-center">
+            <div className="inline-block p-4 rounded-full bg-purple-50 mb-4">
+               <Zap className="w-8 h-8 text-purple-200" />
+            </div>
+            <p className="text-purple-300 text-sm font-medium tracking-wide italic">
+              Your space is clear.
+            </p>
           </div>
         )}
+      </main>
 
-        {/* Input Area */}
-        <section className="bg-white p-1 rounded-2xl shadow-sm border border-slate-200">
-          <TaskForm onAdd={handleAddTask} />
-        </section>
-
-        {/* Controls */}
-        <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-          <div className="flex gap-1">
-            {(['all', 'active', 'completed'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors capitalize ${
-                  filter === f ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-          {stats.completed > 0 && (
-            <button
-              onClick={handleClearCompleted}
-              className="text-sm text-red-500 hover:text-red-600 font-medium flex items-center gap-1 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              Clear
-            </button>
-          )}
+      <footer className="mt-24 pt-10 border-t border-purple-50 flex justify-between items-center opacity-40 text-[9px] font-black uppercase tracking-[0.25em] text-purple-400">
+        <div className="flex items-center gap-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.5)]"></div>
+          <span>Cloud Persist Ready</span>
         </div>
-
-        {/* Main List */}
-        <section className="space-y-4">
-          {filteredTodos.length > 0 ? (
-            <TaskList 
-              todos={filteredTodos} 
-              onToggle={handleToggleTodo} 
-              onDelete={handleDeleteTodo} 
-              onEdit={handleEditTodo} 
-            />
-          ) : (
-            <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-300">
-              <p className="text-slate-400 font-medium">No tasks found in "{filter}"</p>
-              <p className="text-slate-300 text-sm">Add one to get started!</p>
-            </div>
-          )}
-        </section>
-
-        {/* Footer Stats */}
-        <footer className="pt-8 border-t border-slate-200 flex justify-between items-center text-xs font-semibold text-slate-400 uppercase tracking-widest">
-          <div>{stats.active} items left</div>
-          <div>Persisted Locally</div>
-        </footer>
-      </div>
+        <span>Instance: {process.env.DB_PATH || 'default'}</span>
+      </footer>
     </div>
   );
 };

@@ -1,12 +1,13 @@
 
 import { Todo } from '../types';
 
-const STORAGE_KEY = 'gemini_smart_tasks_db';
-
 /**
- * Database service using localStorage as a simplified persistent storage.
- * Designed with an async interface to allow future migration to SQLite/IndexedDB.
+ * Storage key is derived from the DB_PATH environment variable.
+ * This simulates a database path in a local storage environment.
  */
+const DB_PATH = process.env.DB_PATH || 'tasks.db';
+const STORAGE_KEY = `minimal_db_v2_${DB_PATH}`;
+
 export const dbService = {
   async getAll(): Promise<Todo[]> {
     const data = localStorage.getItem(STORAGE_KEY);
@@ -19,7 +20,7 @@ export const dbService = {
 
   async add(todo: Todo): Promise<Todo> {
     const todos = await this.getAll();
-    const updated = [...todos, todo];
+    const updated = [todo, ...todos];
     await this.save(updated);
     return todo;
   },
@@ -27,7 +28,7 @@ export const dbService = {
   async update(id: string, updates: Partial<Todo>): Promise<Todo> {
     const todos = await this.getAll();
     const index = todos.findIndex(t => t.id === id);
-    if (index === -1) throw new Error('Todo not found');
+    if (index === -1) throw new Error('Task not found');
     
     const updatedTodo = { ...todos[index], ...updates };
     todos[index] = updatedTodo;
