@@ -9,6 +9,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <script>
+        // Shim for process.env to prevent crashes in browser environments
+        window.process = {
+            env: {
+                DB_PATH: 'tasks.db',
+                // API_KEY is usually injected by the environment, 
+                // but we ensure the object exists to avoid 'undefined' errors
+                API_KEY: '' 
+            }
+        };
+    </script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -33,6 +44,20 @@
         .custom-shadow {
             box-shadow: 0 4px 20px -5px rgba(124, 58, 237, 0.05);
         }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e9d5ff;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d8b4fe;
+        }
     </style>
 <script type="importmap">
 {
@@ -48,5 +73,7 @@
 </head>
 <body>
     <div id="root"></div>
+    <!-- Explicitly load the application entry point -->
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
