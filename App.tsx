@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { dbService } from './services/dbService';
-import { geminiService } from './services/geminiService';
-import { Todo, Priority } from './types';
-import TaskForm from './components/TaskForm';
-import TaskList from './components/TaskList';
+import { dbService } from './services/dbService.ts';
+import { geminiService } from './services/geminiService.ts';
+import { Todo, Priority } from './types.ts';
+import TaskForm from './components/TaskForm.tsx';
+import TaskList from './components/TaskList.tsx';
 import { Sparkles, Loader2, Zap } from 'lucide-react';
 
 const App: React.FC = () => {

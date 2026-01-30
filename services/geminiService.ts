@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Todo, AIResponse } from "../types";
+import { Todo, AIResponse } from "../types.ts";
 
 // Lazy initialization to prevent crashes if API_KEY is missing/empty on start
 let genAIInstance: GoogleGenAI | null = null;

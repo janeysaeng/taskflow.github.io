@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Priority } from '../types';
+import { Priority } from '../types.ts';
 import { Plus, ArrowRight } from 'lucide-react';
 
 interface TaskFormProps {

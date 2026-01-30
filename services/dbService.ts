@@ -1,5 +1,5 @@
 
-import { Todo } from '../types';
+import { Todo } from '../types.ts';
 
 /**
  * Storage key is derived from the DB_PATH environment variable.

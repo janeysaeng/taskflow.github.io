@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Todo } from '../types';
+import { Todo } from '../types.ts';
 import { Trash2, Edit3, Check, MoreVertical } from 'lucide-react';
 
 interface TaskItemProps {
